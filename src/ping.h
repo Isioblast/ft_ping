@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/02/27 03:02:17 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/02/29 09:36:27 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,5 +43,6 @@
 
 #define DEFAULT_TTL 255
 #define DEFAULT_MTU 1500
+#define PING_DEFAULT_INTERVAL 1000
 
 #endif // PING_H
