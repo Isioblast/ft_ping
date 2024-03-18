@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/02/29 09:36:27 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/18 10:31:15 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,33 @@
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //    |     Data ...
 //    +-+-+-+-+-
+#include <stdint.h>
+#include <netinet/ip_icmp.h>
 
-#define DEFAULT_TTL 255
-#define DEFAULT_MTU 1500
+#define PING_DEFAULT_TTL 255
+#define PING_DEFAULT_MTU 1500
 #define PING_DEFAULT_INTERVAL 1000
+
+typedef struct s_ping_opt
+{
+	uint8_t	verbose;
+	size_t	count;
+	size_t	ttl;
+}	t_ping_opt;
+
+typedef struct s_ping
+{
+	int				fd;
+	struct icmphdr	hdr;
+	uint8_t			*data;
+	size_t			datalen;
+	size_t			interval;
+	size_t			count;
+}	t_ping;
+
+int ping_init(t_ping *ping);
+struct icmphdr icmp_init();
+uint16_t chksum(uint16_t *addr, int len);
+int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
 
 #endif // PING_H
