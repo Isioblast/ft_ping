@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/29 03:23:08 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/18 10:45:44 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/21 09:37:54 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,22 +23,16 @@
 
 #include "ping.h"
 
-void printaddr(int family, struct in_addr *addr, char *msg) //debug
-{
-	char pdstaddr[255];
-	memset(pdstaddr, 0, sizeof(pdstaddr));
-	const char *dst = inet_ntop(family, addr, pdstaddr, sizeof(pdstaddr));
-	if (!dst)
-	{
-		perror("ping");
-	}
-	printf("%s: %s\n", msg, pdstaddr);
-}
-
 static error_t parse_opt (int key, char *arg __attribute_maybe_unused__, struct argp_state *state __attribute_maybe_unused__)
 {
 	switch (key)
 	{
+		case 'c':
+			((t_ping_opt *)state->input)->count = 1;
+			break;
+		case ARG_TTL:
+			((t_ping_opt *)state->input)->ttl = 255;
+			break;
 		case 'v':
 			break;
 		default:
@@ -48,57 +42,41 @@ static error_t parse_opt (int key, char *arg __attribute_maybe_unused__, struct 
 }
 
 static const char doc[] =
-	"Send ICMP ECHO_REQUEST packets to network hosts."
-	"\vOptions marked with (root only) are available only to superuser.";
+	"Send ICMP ECHO_REQUEST packets to network hosts.";
+
+struct argp_option argp_opt[] = {
+#define GROUP 0
+	{NULL, 0, NULL, 0, "Options valid for all request types:", GROUP},
+	{"count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", GROUP+1},
+	{"ttl", ARG_TTL, "NUMBER", 0, "specify N as time-to-live", GROUP+1},
+	{"verbose", 'v', NULL, 0, "verbose output", GROUP+1},
+	{NULL, 0, NULL, 0, NULL, 0}
+#undef GROUP
+};
+
+struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
 
 int main(int argc, char **argv)
 {
-	t_ping ping;
-
-	struct argp_option argp_opt[] =
-		{
-			{"verbose", 'v', NULL, 0, "verbose output", 0},
-			{NULL, 0, NULL, 0, NULL, 0}
-		};
-
-	struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
+	t_ping		ping;
+	t_ping_opt	ping_opt;
 
 	int parse_idx;
 	parse_idx = 0;
-	argp_parse(&argp, argc, argv, 0, &parse_idx, 0);
+	memset(&ping_opt, 0, sizeof(ping_opt));
+	argp_parse(&argp, argc, argv, 0, &parse_idx, &ping_opt);
 
 	if (ping_init(&ping))
 	{
-		perror("ping");
+		perror("ping test");
 		exit(EXIT_FAILURE);
 	}
 	ping.hdr.checksum = chksum((uint16_t *)&ping.hdr, sizeof(ping.hdr)); //TODO delete and call it before sendto()
 
+	init_dest_addr(AF_INET, argv[parse_idx], &ping.dest);
+	ping.hostname = argv[parse_idx];
 
-	struct sockaddr_in dest_addr;
-	init_dest_addr(AF_INET, argv[parse_idx], &dest_addr);
-
-	ssize_t bytes_sent = sendto(ping.fd, &ping.hdr, (sizeof(ping.hdr)),
-								0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-	if (bytes_sent < 0)
-	{
-		perror("sendto");
-		exit(EXIT_FAILURE);
-	}
-
-	uint8_t recvbuf[PING_DEFAULT_MTU];
-	struct sockaddr from;
-	socklen_t addrlen;
-	memset(recvbuf, 0, sizeof(recvbuf));
-	memset(&from, 0, sizeof(from));
-	addrlen = 0;
-	ssize_t bytes_recv = recvfrom(ping.fd, recvbuf, sizeof(recvbuf), 0, &from, &addrlen);
-	if (bytes_recv < 0)
-	{
-		perror("recvfrom");
-		exit(EXIT_FAILURE);
-	}
-	printf("Receive bytes : %ld\n", bytes_recv);
+	ping_loop(&ping);
 
 	if (close(ping.fd) < 0)
 	{

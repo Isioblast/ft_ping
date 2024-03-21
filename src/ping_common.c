@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 04:07:23 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/18 11:04:46 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/21 08:11:24 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <error.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include "ping.h"
 
 uint16_t chksum(uint16_t *addr, int len)
@@ -46,16 +49,15 @@ struct icmphdr icmp_init()
 {
 	struct icmphdr icmphdr;
 
+	memset(&icmphdr, 0 , sizeof(icmphdr));
 	icmphdr.type = ICMP_ECHO;
-	icmphdr.code = 0;
-	icmphdr.checksum = 0;
 	icmphdr.un.echo.id = getpid();
-	icmphdr.un.echo.sequence = 0;
 	return (icmphdr);
 }
 
 int ping_init(t_ping *ping)
 {
+	memset(ping, 0, sizeof(*ping));
     ping->fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (ping->fd < 0)
 	{
@@ -81,27 +83,30 @@ int ping_init(t_ping *ping)
 	}
     ping->hdr = icmp_init();
     ping->data = NULL;
-    ping->datalen = 0;
     ping->interval = PING_DEFAULT_INTERVAL;
-    ping->count = 0;
     return (0);
 }
 
-int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest)
+int init_dest_addr(const int af, const char *const src, struct sockaddr_in *const dest)
 {
-	int err;
+	int err_code;
 
 	memset(dest, 0, sizeof(*dest));
 	dest->sin_family = af;
-	err = inet_pton(af, src, &dest->sin_addr);
-	if (err <= 0)
+	err_code = inet_pton(af, src, &dest->sin_addr);
+	if (err_code <= 0)
 	{
-		if (err < 0)
+		if (err_code < 0)
 		{
 			perror("ping");
 			exit(EXIT_FAILURE);
 		}
-		// TODO if err, handle dns conversionr
+		err_code = lookup_host(src, dest);
+		if (err_code != 0)
+		{
+			fprintf(stderr, "ping: unknown host\n");
+			exit(EXIT_FAILURE);
+		}
 	}
-	return (err);
+	return (err_code);
 }
