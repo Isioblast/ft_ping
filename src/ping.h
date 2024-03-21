@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/18 10:31:15 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/21 09:36:11 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,8 @@
 #define PING_DEFAULT_MTU 1500
 #define PING_DEFAULT_INTERVAL 1000
 
+#define ARG_TTL 260
+
 typedef struct s_ping_opt
 {
 	uint8_t	verbose;
@@ -54,19 +56,32 @@ typedef struct s_ping_opt
 	size_t	ttl;
 }	t_ping_opt;
 
+typedef struct s_ping_stat
+{
+	char	*hostname;
+	size_t	emit_nb;
+	size_t	receive_nb;
+	int		max_time;
+	int		min_time;
+}	t_ping_stat;
+
 typedef struct s_ping
 {
-	int				fd;
-	struct icmphdr	hdr;
-	uint8_t			*data;
-	size_t			datalen;
-	size_t			interval;
-	size_t			count;
+	char				*hostname;
+	int					fd;
+	struct sockaddr_in	dest;
+	struct icmphdr		hdr;
+	uint8_t				*data;
+	size_t				datalen;
+	size_t				interval;
+	size_t				count;
 }	t_ping;
 
 int ping_init(t_ping *ping);
 struct icmphdr icmp_init();
 uint16_t chksum(uint16_t *addr, int len);
 int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
+int lookup_host(const char *const hostname, struct sockaddr_in *const dest);
+int ping_loop(t_ping *ping);
 
 #endif // PING_H
