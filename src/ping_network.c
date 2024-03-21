@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 05:24:46 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/21 10:34:31 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/21 10:58:04 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <errno.h>
 
 #include "ping.h"
 
@@ -83,6 +84,15 @@ int ping_loop(t_ping *ping)
 	memset(&addrbuf, 0, sizeof(addrbuf));
 	inet_ntop(ping->dest.sin_family, &ping->dest.sin_addr, addrbuf, sizeof(addrbuf));
 	printf("PING %s (%s): %zu data bytes\n", ping->hostname, addrbuf, ping->datalen);
+
+
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+		perror("setsockopt");
+	}
+
 	while (run)
 	{
 		printf("Sending %zu bytes of data to %s\n", sizeof(ping->hdr) + ping->datalen, addrbuf);
@@ -105,14 +115,19 @@ int ping_loop(t_ping *ping)
 		ssize_t bytes_recv = recvfrom(ping->fd, recvbuf, sizeof(recvbuf), 0, &from, &addrlen);
 		if (bytes_recv < 0)
 		{
-			perror("recvfrom");
-			return (-1);
+			if (errno != EAGAIN)
+			{
+				perror("recvfrom");
+				return (-1);
+			}
 		}
-		stats.receive_nb += 1;
-		char addrbufrecv[16];
-		memset(addrbufrecv, 0, sizeof(addrbufrecv));
-		printf("Received %zu bytes from \n", bytes_recv);
-
+		else
+		{
+			stats.receive_nb += 1;
+			char addrbufrecv[16];
+			memset(addrbufrecv, 0, sizeof(addrbufrecv));
+			printf("Received %zu bytes from \n", bytes_recv);
+		}
 		sleep(1);
 	}
 
