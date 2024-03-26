@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/26 10:43:01 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/26 14:46:21 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ typedef struct s_ping
 	size_t				datalen;
 	size_t				interval;
 	size_t				count;
+	uint8_t				verbose;
 }	t_ping;
 
 int ping_init(t_ping *ping, t_ping_opt *opt);

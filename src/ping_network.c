@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 05:24:46 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/26 11:15:03 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/26 16:21:35 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <arpa/inet.h>
 #include <signal.h>
 #include <unistd.h>
@@ -104,22 +105,27 @@ static int receiv_reply(t_ping *ping, t_ping_stat *stats)
 	memset(recvbuf, 0, sizeof(recvbuf));
 	memset(&from, 0, sizeof(from));
 	addrlen = 0;
-	bytes_recv = recvfrom(ping->fd, recvbuf, sizeof(recvbuf), 0, &from, &addrlen);
-	if (bytes_recv < 0)
+	while (run)
 	{
-		if (errno != EAGAIN)
+		bytes_recv = recvfrom(ping->fd, recvbuf, sizeof(recvbuf), 0, &from, &addrlen);
+		if (bytes_recv < 0)
 		{
-			perror("recvfrom");
+			if (errno != EAGAIN)
+			{
+				perror("ping");
+				exit(EXIT_FAILURE);
+			}
+			// if -c is set, check timeout of 10 sec max and break if necessary;
+		}
+		else
+		{
+			stats->receive_nb += 1;
+			char addrbufrecv[16];
+			memset(addrbufrecv, 0, sizeof(addrbufrecv));
+			printf("Received %zu bytes from \n", bytes_recv);
+			// check error return like for ttl exceed
 		}
 	}
-	else
-	{
-		stats->receive_nb += 1;
-		char addrbufrecv[16];
-		memset(addrbufrecv, 0, sizeof(addrbufrecv));
-		printf("Received %zu bytes from \n", bytes_recv);
-	}
-	// check error return like for ttl exceed
 	return (bytes_recv);
 }
 
@@ -127,7 +133,6 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 {
 	char			addrbuf[16];
 	t_ping_stat		stats;
-	struct timeval	sock_timeout;
 	struct timeval	start_time;
 	struct timeval	current_time;
 	int64_t			sleeptime;
@@ -139,12 +144,6 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 	}
 	memset(&stats, 0, sizeof(stats));
 
-	sock_timeout.tv_sec = 1;
-	sock_timeout.tv_usec = 0;
-	if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout)) < 0) {
-		perror("ping");
-	}
-
 	memset(&addrbuf, 0, sizeof(addrbuf));
 	inet_ntop(ping->dest.sin_family, &ping->dest.sin_addr, addrbuf, sizeof(addrbuf));
 	printf("PING %s (%s): %zu data bytes\n", ping->hostname, addrbuf, ping->datalen);
@@ -154,6 +153,10 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 	{
 		gettimeofday(&start_time, NULL);
 		send_echo(ping, &stats);
+		if (opt->count && ping->count == opt->count - 1)
+		{
+			break;
+		}
 		receiv_reply(ping, &stats);
 		ping->count += 1;
 		if (opt->count && ping->count >= opt->count)
@@ -163,9 +166,9 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 		gettimeofday(&current_time, NULL);
 		sleeptime = ping->interval - (((current_time.tv_sec - start_time.tv_sec) * 1000) + (current_time.tv_usec - start_time.tv_usec) / 1000);
 		printf("Should Sleep for %lu.\n", sleeptime);
-		if (sleeptime > 0)
+		if (sleeptime > 0) // change this in 10ms small parts of 10 ms too
 		{
-			msleep(1000);
+			msleep(sleeptime);
 		}
 		ping->hdr.un.echo.sequence += 1;
 	}
