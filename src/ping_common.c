@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 04:07:23 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/25 16:45:53 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/26 15:55:47 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ struct icmphdr icmp_init()
 
 int ping_init(t_ping *ping, t_ping_opt *opt)
 {
+	struct timeval	sock_timeout;
+
 	memset(ping, 0, sizeof(*ping));
     ping->fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (ping->fd < 0)
@@ -81,6 +83,16 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
             return (-1);
         }
 	}
+	if (opt->count)
+	{
+		sock_timeout.tv_sec = 0;
+		sock_timeout.tv_usec = 10000;
+		if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout)) < 0)
+		{
+			perror("ping");
+			return (0);
+		}
+	}
 	if (opt->ttl != 0)
 	{
 		if (setsockopt(ping->fd, IPPROTO_IP, IP_TTL, &opt->ttl, sizeof(opt->ttl)) == -1)
@@ -88,6 +100,10 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 			perror("ping");
 			return (0);
 		}
+	}
+	if (opt->verbose != 0)
+	{
+		ping->verbose = opt->verbose;
 	}
     ping->hdr = icmp_init();
     ping->data = NULL;
