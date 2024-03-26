@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/29 03:23:08 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/21 09:37:54 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/25 16:51:15 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <error.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,15 +26,33 @@
 
 static error_t parse_opt (int key, char *arg __attribute_maybe_unused__, struct argp_state *state __attribute_maybe_unused__)
 {
+	char		*endptr;
+	t_ping_opt	*opt;
+
+	opt = ((t_ping_opt *)state->input);
+	endptr = NULL;
 	switch (key)
 	{
 		case 'c':
-			((t_ping_opt *)state->input)->count = 1;
+			opt->count = strtoul(arg, &endptr, 10);
+			if (endptr != NULL && *endptr != '\0') //TODO refactor this if and the following if
+			{
+				error(EXIT_FAILURE, 0, "ping: invalid value (`%s' near `%s')", arg, endptr);
+			}
 			break;
 		case ARG_TTL:
-			((t_ping_opt *)state->input)->ttl = 255;
+			opt->ttl = strtoul(arg, &endptr, 10);
+			if (endptr != NULL && *endptr != '\0') //TODO refactor this if
+			{
+				error(EXIT_FAILURE, 0, "ping: invalid value (`%s' near `%s')", arg, endptr);
+			}
+			if (opt->ttl > 255)
+			{
+				error(EXIT_FAILURE, 0, "ping: option value too big: %s", arg);
+			}
 			break;
 		case 'v':
+			opt->verbose = 1;
 			break;
 		default:
 			return ARGP_ERR_UNKNOWN;
@@ -66,17 +85,15 @@ int main(int argc, char **argv)
 	memset(&ping_opt, 0, sizeof(ping_opt));
 	argp_parse(&argp, argc, argv, 0, &parse_idx, &ping_opt);
 
-	if (ping_init(&ping))
+	if (ping_init(&ping, &ping_opt))
 	{
-		perror("ping test");
 		exit(EXIT_FAILURE);
 	}
-	ping.hdr.checksum = chksum((uint16_t *)&ping.hdr, sizeof(ping.hdr)); //TODO delete and call it before sendto()
 
 	init_dest_addr(AF_INET, argv[parse_idx], &ping.dest);
 	ping.hostname = argv[parse_idx];
 
-	ping_loop(&ping);
+	ping_loop(&ping, &ping_opt);
 
 	if (close(ping.fd) < 0)
 	{

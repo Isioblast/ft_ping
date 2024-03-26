@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/21 09:36:11 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/26 10:43:01 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,8 +44,9 @@
 #include <netinet/ip_icmp.h>
 
 #define PING_DEFAULT_TTL 255
-#define PING_DEFAULT_MTU 1500
+#define PING_DEFAULT_DATALEN 56
 #define PING_DEFAULT_INTERVAL 1000
+#define PING_DEFAULT_MTU 1500
 
 #define ARG_TTL 260
 
@@ -53,7 +54,7 @@ typedef struct s_ping_opt
 {
 	uint8_t	verbose;
 	size_t	count;
-	size_t	ttl;
+	int		ttl;
 }	t_ping_opt;
 
 typedef struct s_ping_stat
@@ -77,11 +78,12 @@ typedef struct s_ping
 	size_t				count;
 }	t_ping;
 
-int ping_init(t_ping *ping);
+int ping_init(t_ping *ping, t_ping_opt *opt);
 struct icmphdr icmp_init();
 uint16_t chksum(uint16_t *addr, int len);
 int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
 int lookup_host(const char *const hostname, struct sockaddr_in *const dest);
-int ping_loop(t_ping *ping);
+int ping_loop(t_ping *ping, t_ping_opt *opt);
+int msleep(const size_t msec);
 
 #endif // PING_H
