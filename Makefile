@@ -6,7 +6,7 @@
 #    By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/30 02:48:49 by tde-vlee          #+#    #+#              #
-#    Updated: 2024/03/18 11:10:10 by tde-vlee         ###   ########.fr        #
+#    Updated: 2024/03/26 11:18:20 by tde-vlee         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,8 @@ HEADER =
 SRCS =	./src/ping.c \
 		./src/ping_common.c \
 		./src/ping_network.c \
-		./src/ping_common.c 
+		./src/ping_common.c \
+		./src/ping_lib.c
 
 OBJS = $(SRCS:.c=.o)
 

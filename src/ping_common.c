@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 04:07:23 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/21 08:11:24 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/03/25 16:45:53 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ struct icmphdr icmp_init()
 	return (icmphdr);
 }
 
-int ping_init(t_ping *ping)
+int ping_init(t_ping *ping, t_ping_opt *opt)
 {
 	memset(ping, 0, sizeof(*ping));
     ping->fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -81,6 +81,14 @@ int ping_init(t_ping *ping)
             return (-1);
         }
 	}
+	if (opt->ttl != 0)
+	{
+		if (setsockopt(ping->fd, IPPROTO_IP, IP_TTL, &opt->ttl, sizeof(opt->ttl)) == -1)
+		{
+			perror("ping");
+			return (0);
+		}
+	}
     ping->hdr = icmp_init();
     ping->data = NULL;
     ping->interval = PING_DEFAULT_INTERVAL;
@@ -91,6 +99,11 @@ int init_dest_addr(const int af, const char *const src, struct sockaddr_in *cons
 {
 	int err_code;
 
+	if (src == NULL)
+	{
+		fprintf(stderr, "ping: missing host operand\nTry 'ping --help' or 'ping --usage' for more information.\n");
+		exit(EXIT_FAILURE);
+	}
 	memset(dest, 0, sizeof(*dest));
 	dest->sin_family = af;
 	err_code = inet_pton(af, src, &dest->sin_addr);
