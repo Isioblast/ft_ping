@@ -19,6 +19,6 @@ Misc :
 <https://www.gnu.org/software/libc/manual/html_node/Argp.html>
 <https://stackoverflow.com/questions/42840636/difference-between-struct-ip-and-struct-iphdr>
 
-Getaddrinfo leaks :  
+Getaddrinfo memory leaks :  
 <https://stackoverflow.com/questions/77642568/valgrind-showing-still-reachable-memory-leak-with-getaddrinfo>
 <https://bugs.kde.org/show_bug.cgi?id=448991>

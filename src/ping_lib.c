@@ -11,16 +11,16 @@
 /* ************************************************************************** */
 
 #include <time.h>
-#include <errno.h>    
+#include <errno.h>
 
 // msleep(): Sleep for the requested number of milliseconds.
 int msleep(const size_t msec)
 {
-    struct timespec ts;
-    int res;
+	struct timespec ts;
+	int res;
 
-    ts.tv_sec = msec / 1000;
-    ts.tv_nsec = (msec % 1000) * 1000000;
-    res = nanosleep(&ts, &ts);
-    return res;
+	ts.tv_sec = msec / 1000;
+	ts.tv_nsec = (msec % 1000) * 1000000;
+	res = nanosleep(&ts, NULL);
+	return res;
 }

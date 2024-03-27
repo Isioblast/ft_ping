@@ -46,38 +46,39 @@
 #define PING_DEFAULT_TTL 255
 #define PING_DEFAULT_DATALEN 56
 #define PING_DEFAULT_INTERVAL 1000
+#define PING_DEFAULT_COUNT_TIMEOUT 10000
 #define PING_DEFAULT_MTU 1500
 
 #define ARG_TTL 260
 
 typedef struct s_ping_opt
 {
-	uint8_t	verbose;
-	size_t	count;
-	int		ttl;
-}	t_ping_opt;
+	uint8_t verbose;
+	size_t count;
+	int ttl;
+} t_ping_opt;
 
 typedef struct s_ping_stat
 {
-	char	*hostname;
-	size_t	emit_nb;
-	size_t	receive_nb;
-	int		max_time;
-	int		min_time;
-}	t_ping_stat;
+	char *hostname;
+	size_t emit_nb;
+	size_t receive_nb;
+	int max_time;
+	int min_time;
+} t_ping_stat;
 
 typedef struct s_ping
 {
-	char				*hostname;
-	int					fd;
-	struct sockaddr_in	dest;
-	struct icmphdr		hdr;
-	uint8_t				*data;
-	size_t				datalen;
-	size_t				interval;
-	size_t				count;
-	uint8_t				verbose;
-}	t_ping;
+	char *hostname;
+	int fd;
+	struct sockaddr_in dest;
+	struct icmphdr hdr;
+	uint8_t *data;
+	size_t datalen;
+	size_t interval;
+	size_t count;
+	uint8_t verbose;
+} t_ping;
 
 int ping_init(t_ping *ping, t_ping_opt *opt);
 struct icmphdr icmp_init();

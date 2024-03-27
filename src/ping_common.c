@@ -57,10 +57,10 @@ struct icmphdr icmp_init()
 
 int ping_init(t_ping *ping, t_ping_opt *opt)
 {
-	struct timeval	sock_timeout;
+	struct timeval sock_timeout;
 
 	memset(ping, 0, sizeof(*ping));
-    ping->fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	ping->fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (ping->fd < 0)
 	{
 		if (errno != EPERM && errno != EACCES)
@@ -72,26 +72,23 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 		ping->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
 		if (ping->fd < 0)
 		{
-            if (errno == EPERM || errno == EACCES || errno == EPROTONOSUPPORT)
-            {
-                fprintf(stderr, "ping: Lacking privilege for icmp socket.\n");
-            }
-            else
-            {
-                perror("ping");
-            }
-            return (-1);
-        }
-	}
-	if (opt->count)
-	{
-		sock_timeout.tv_sec = 0;
-		sock_timeout.tv_usec = 10000;
-		if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout)) < 0)
-		{
-			perror("ping");
-			return (0);
+			if (errno == EPERM || errno == EACCES || errno == EPROTONOSUPPORT)
+			{
+				fprintf(stderr, "ping: Lacking privilege for icmp socket.\n");
+			}
+			else
+			{
+				perror("ping");
+			}
+			return (-1);
 		}
+	}
+	sock_timeout.tv_sec = 0;
+	sock_timeout.tv_usec = 10000;
+	if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout)) < 0)
+	{
+		perror("ping");
+		return (0);
 	}
 	if (opt->ttl != 0)
 	{
@@ -105,10 +102,10 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 	{
 		ping->verbose = opt->verbose;
 	}
-    ping->hdr = icmp_init();
-    ping->data = NULL;
-    ping->interval = PING_DEFAULT_INTERVAL;
-    return (0);
+	ping->hdr = icmp_init();
+	ping->data = NULL;
+	ping->interval = PING_DEFAULT_INTERVAL;
+	return (0);
 }
 
 int init_dest_addr(const int af, const char *const src, struct sockaddr_in *const dest)

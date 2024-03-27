@@ -24,10 +24,10 @@
 
 #include "ping.h"
 
-static error_t parse_opt (int key, char *arg __attribute_maybe_unused__, struct argp_state *state __attribute_maybe_unused__)
+static error_t parse_opt(int key, char *arg __attribute_maybe_unused__, struct argp_state *state __attribute_maybe_unused__)
 {
-	char		*endptr;
-	t_ping_opt	*opt;
+	char *endptr;
+	t_ping_opt *opt;
 
 	opt = ((t_ping_opt *)state->input);
 	endptr = NULL;
@@ -35,14 +35,15 @@ static error_t parse_opt (int key, char *arg __attribute_maybe_unused__, struct 
 	{
 		case 'c':
 			opt->count = strtoul(arg, &endptr, 10);
-			if (endptr != NULL && *endptr != '\0') //TODO refactor this if and the following if
+			if (endptr != NULL && *endptr != '\0') // TODO refactor this if and the following if
 			{
 				error(EXIT_FAILURE, 0, "ping: invalid value (`%s' near `%s')", arg, endptr);
 			}
+			//TODO invalid argument like -c 0
 			break;
 		case ARG_TTL:
 			opt->ttl = strtoul(arg, &endptr, 10);
-			if (endptr != NULL && *endptr != '\0') //TODO refactor this if
+			if (endptr != NULL && *endptr != '\0') // TODO refactor this if
 			{
 				error(EXIT_FAILURE, 0, "ping: invalid value (`%s' near `%s')", arg, endptr);
 			}
@@ -66,9 +67,9 @@ static const char doc[] =
 struct argp_option argp_opt[] = {
 #define GROUP 0
 	{NULL, 0, NULL, 0, "Options valid for all request types:", GROUP},
-	{"count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", GROUP+1},
-	{"ttl", ARG_TTL, "NUMBER", 0, "specify N as time-to-live", GROUP+1},
-	{"verbose", 'v', NULL, 0, "verbose output", GROUP+1},
+	{"count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", GROUP + 1},
+	{"ttl", ARG_TTL, "NUMBER", 0, "specify N as time-to-live", GROUP + 1},
+	{"verbose", 'v', NULL, 0, "verbose output", GROUP + 1},
 	{NULL, 0, NULL, 0, NULL, 0}
 #undef GROUP
 };
@@ -77,8 +78,8 @@ struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
 
 int main(int argc, char **argv)
 {
-	t_ping		ping;
-	t_ping_opt	ping_opt;
+	t_ping ping;
+	t_ping_opt ping_opt;
 
 	int parse_idx;
 	parse_idx = 0;
