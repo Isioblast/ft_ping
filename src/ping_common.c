@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 04:07:23 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/26 15:55:47 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/04/02 11:56:10 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ uint16_t chksum(uint16_t *addr, int len)
 	int sum = 0;
 	uint16_t *w = addr;
 	uint16_t answer = 0;
+
 	while (nleft > 1)
 	{
 		sum += *w++;
@@ -49,9 +50,9 @@ struct icmphdr icmp_init()
 {
 	struct icmphdr icmphdr;
 
-	memset(&icmphdr, 0 , sizeof(icmphdr));
+	memset(&icmphdr, 0, sizeof(icmphdr));
 	icmphdr.type = ICMP_ECHO;
-	icmphdr.un.echo.id = getpid();
+	icmphdr.un.echo.id = htons(getpid());
 	return (icmphdr);
 }
 
@@ -88,14 +89,14 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 	if (setsockopt(ping->fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout)) < 0)
 	{
 		perror("ping");
-		return (0);
+		return (-1);
 	}
 	if (opt->ttl != 0)
 	{
 		if (setsockopt(ping->fd, IPPROTO_IP, IP_TTL, &opt->ttl, sizeof(opt->ttl)) == -1)
 		{
 			perror("ping");
-			return (0);
+			return (-1);
 		}
 	}
 	if (opt->verbose != 0)
@@ -109,7 +110,7 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 	return (0);
 }
 
-int init_dest_addr(const int af, const char *const src, struct sockaddr_in *const dest)
+void init_dest_addr(const int af, const char *const src, struct sockaddr_in *const dest)
 {
 	int err_code;
 
@@ -135,5 +136,4 @@ int init_dest_addr(const int af, const char *const src, struct sockaddr_in *cons
 			exit(EXIT_FAILURE);
 		}
 	}
-	return (err_code); //TODO return of errcode is incoherent. the function exit when errorcode != 0
 }

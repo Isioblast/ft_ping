@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 05:24:46 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/26 16:21:35 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/04/02 14:50:48 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "ping.h"
 
@@ -68,80 +69,129 @@ int lookup_host(const char *const hostname, struct sockaddr_in *const dest)
 
 static void print_stats(t_ping_stat *stats)
 {
+	double average_time;
+
 	fflush(stdout);
 	printf("--- %s ping statistics ---\n", stats->hostname);
 	printf("%zu packets transmitted, ", stats->emit_nb);
 	printf("%zu packets received, ", stats->receive_nb);
-	printf("%d%% packet loss", (int)(((stats->emit_nb - stats->receive_nb) * 100) / stats->emit_nb));
+	printf("%d%% packet loss\n", (int)(((stats->emit_nb - stats->receive_nb) * 100) / stats->emit_nb));
+	average_time = stats->time_sum / stats->emit_nb;
+	if (stats->receive_nb > 0)
+	{
+		printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
+			   stats->time_min, average_time, stats->time_max);
+	}
+}
+
+void print_icmp_type_msg(uint8_t type)
+{
+	switch (type)
+	{
+		case ICMP_DEST_UNREACH:
+			printf("Destination Unreachable");
+			break;
+		case ICMP_SOURCE_QUENCH:
+			printf("Source Quench");
+			break;
+		case ICMP_REDIRECT:
+			printf("Redirect");
+			break;
+		case ICMP_ECHO:
+			printf("Echo Request");
+			break;
+		case ICMP_TIME_EXCEEDED:
+			printf("Time to live exceeded");
+			break;
+		case ICMP_PARAMETERPROB:
+			printf("Parameter Problem");
+			break;
+		case ICMP_TIMESTAMP:
+			printf("Timestamp Request");
+			break;
+		case ICMP_TIMESTAMPREPLY:
+			printf("Timestamp Reply");
+			break;
+		case ICMP_INFO_REQUEST:
+			printf("Information Request");
+			break;
+		case ICMP_INFO_REPLY:
+			printf("Information Reply");
+			break;
+		case ICMP_ADDRESS:
+			printf("Address Mask Request");
+			break;
+		case ICMP_ADDRESSREPLY:
+			printf("Address Mask Reply");
+			break;
+		default:
+			printf("Unknow icmp code");
+			break;
+	}
 	printf("\n");
 }
 
-// static int msleepstep(const size_t msec, const size_t mstep)
-// {
-// 	struct timeval current;
-// 	struct timeval timeout;
-
-// 	if (gettimeofday(&current, NULL) != 0)
-// 	{
-// 		perror("ping");
-// 		exit(EXIT_FAILURE);
-// 	}
-// 	timeout.tv_sec = current.tv_sec + (msec / 1000);
-// 	timeout.tv_usec = current.tv_usec + ((msec % 1000) * 1000);
-// 	while (run && (current.tv_sec <= timeout.tv_sec && current.tv_usec < timeout.tv_usec))
-// 	{
-// 		if (gettimeofday(&current, NULL) != 0)
-// 		{
-// 			perror("ping sleepstep");
-// 			exit(EXIT_FAILURE);
-// 		}
-// 		msleep(mstep);
-// 	}
-// 	return (0);
-// }
-
-static void print_reply(const uint8_t *const buf, const size_t buflen, const struct timeval roudntrip_tv, int verbose)
+static void print_reply(const uint8_t *const icmp_buf,
+						const size_t buflen,
+						const struct timeval roudntrip_tv,
+						t_ping_stat *const stats,
+						int verbose)
 {
-	struct iphdr	*ip_header;
-	int				ip_header_len;
-	struct icmphdr	*icmp_header;
-	float			roundtrip_mstime;
-	char			addrbuf[16];
+	struct iphdr *ip_header;
+	int ip_header_len;
+	struct icmphdr *icmp_header;
+	float roundtrip_mstime;
+	char addrbuf[16];
 
-	ip_header = (struct iphdr *) buf;
+	ip_header = (struct iphdr *)icmp_buf;
 	if (ip_header->version != 4)
 	{
-		fprintf(stderr, "Ip header is not  version 4. Version = %d\n", ip_header->version);
-		return ;
+		fprintf(stderr, "ping: ip header is not  version 4. Version = %d\n", ip_header->version);
+		return;
 	}
 	if (ip_header->protocol != IPPROTO_ICMP)
 	{
-		fprintf(stderr, "Protocol is not icmp. Proto = %d\n", ip_header->protocol);
-		return ;
+		fprintf(stderr, "ping: protocol is not icmp. Proto = %d\n", ip_header->protocol);
+		return;
 	}
 	ip_header_len = ip_header->ihl * 4;
-	icmp_header = (struct icmphdr *) &buf[ip_header_len];
-	roundtrip_mstime = 12;
-	roundtrip_mstime += (float)(roudntrip_tv.tv_sec * (float)1000);
+	icmp_header = (struct icmphdr *)&icmp_buf[ip_header_len];
+	roundtrip_mstime = (float)(roudntrip_tv.tv_sec * (float)1000);
 	roundtrip_mstime += (float)(roudntrip_tv.tv_usec / (float)1000);
 	memset(addrbuf, 0, sizeof(addrbuf));
 	inet_ntop(AF_INET, &ip_header->saddr, addrbuf, sizeof(addrbuf));
+	printf("%zu bytes from %s: ", buflen - ip_header_len, addrbuf);
 	if (icmp_header->type != ICMP_ECHOREPLY)
 	{
 		if (verbose)
 		{
-			printf("%zu bytes from %s: type=%d code=%d time=%.3f ms\n", buflen - ip_header_len, addrbuf, icmp_header->type, icmp_header->code, roundtrip_mstime);
+			printf("type=%d code=%d time=%.3f ms\n", icmp_header->type, icmp_header->code, roundtrip_mstime);
+		}
+		else
+		{
+			print_icmp_type_msg(icmp_header->type);
 		}
 		return;
 	}
 	else
 	{
-		printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", buflen - ip_header_len, addrbuf, icmp_header->un.echo.sequence, ip_header->ttl, roundtrip_mstime);
+		stats->receive_nb += 1;
+		stats->time_sum += roundtrip_mstime;
+		if (roundtrip_mstime < stats->time_min)
+		{
+			stats->time_min = roundtrip_mstime;
+		}
+		if (roundtrip_mstime > stats->time_max)
+		{
+			stats->time_max = roundtrip_mstime;
+		}
+		printf("icmp_seq=%d ttl=%d time=%.3f ms", icmp_header->un.echo.sequence, ip_header->ttl, roundtrip_mstime);
 	}
+	printf("\n");
 	return;
 }
 
-static int send_echo(t_ping *ping, t_ping_stat *stats)
+static int send_echo(t_ping *const ping, t_ping_stat *const stats)
 {
 	uint8_t sendbuf[100];
 	struct icmphdr *sendhdr;
@@ -159,19 +209,18 @@ static int send_echo(t_ping *ping, t_ping_stat *stats)
 		return (-1);
 	}
 	stats->emit_nb += 1;
-	//printf("Sended %zu bytes of data, sequence = %d\n", sizeof(ping->hdr) + ping->datalen, ping->hdr.un.echo.sequence); //DEBUG
 	return (bytes_sent);
 }
 
-static int receiv_reply(t_ping *ping, t_ping_stat *stats, struct timeval start_tv) //receiv reply should not print the result, another function should do it
+static int receiv_reply(t_ping *const ping, t_ping_stat *const stats, const struct timeval start_tv)
 {
-	uint8_t			recvbuf[PING_DEFAULT_MTU];
-	struct sockaddr	from;
-	socklen_t		addrlen;
-	ssize_t			bytes_recv;
-	struct timeval	current_tv;
-	struct timeval	timeout_tv;
-	struct timeval	roundtrip;
+	uint8_t recvbuf[PING_DEFAULT_MTU];
+	struct sockaddr from;
+	socklen_t addrlen;
+	ssize_t bytes_recv;
+	struct timeval current_tv;
+	struct timeval timeout_tv;
+	struct timeval roundtrip;
 
 	memset(recvbuf, 0, sizeof(recvbuf));
 	memset(&from, 0, sizeof(from));
@@ -195,7 +244,6 @@ static int receiv_reply(t_ping *ping, t_ping_stat *stats, struct timeval start_t
 		{
 			if (errno != EAGAIN && errno != EINTR)
 			{
-				fprintf(stderr, "Error num = %d\n", errno);
 				perror("ping");
 				exit(EXIT_FAILURE);
 			}
@@ -206,17 +254,16 @@ static int receiv_reply(t_ping *ping, t_ping_stat *stats, struct timeval start_t
 		}
 		else
 		{
-			stats->receive_nb += 1;
 			roundtrip.tv_sec = current_tv.tv_sec - start_tv.tv_sec;
 			roundtrip.tv_usec = current_tv.tv_usec - start_tv.tv_usec;
-			print_reply(recvbuf, bytes_recv, roundtrip, ping->verbose);
+			print_reply(recvbuf, bytes_recv, roundtrip, stats, ping->verbose);
 			break;
 		}
 	}
 	return (0);
 }
 
-int ping_loop(t_ping *ping, t_ping_opt *opt)
+int ping_loop(t_ping *const ping, const t_ping_opt *const opt)
 {
 	char addrbuf[16];
 	t_ping_stat stats;
@@ -230,9 +277,15 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 		return (-1);
 	}
 	memset(&stats, 0, sizeof(stats));
+	stats.time_min = __DBL_MAX__;
 	memset(&addrbuf, 0, sizeof(addrbuf));
 	inet_ntop(ping->dest.sin_family, &ping->dest.sin_addr, addrbuf, sizeof(addrbuf));
-	printf("PING %s (%s): %zu data bytes\n", ping->hostname, addrbuf, ping->datalen);
+	printf("PING %s (%s): %zu data bytes", ping->hostname, addrbuf, ping->datalen);
+	if (ping->verbose)
+	{
+		printf(", id %X = %d", ping->hdr.un.echo.id, ping->hdr.un.echo.id);
+	}
+	printf("\n");
 	while (run)
 	{
 		gettimeofday(&start_time, NULL);
@@ -247,7 +300,6 @@ int ping_loop(t_ping *ping, t_ping_opt *opt)
 		sleeptime = PING_DEFAULT_INTERVAL - (((current_time.tv_sec - start_time.tv_sec) * 1000) + (current_time.tv_usec - start_time.tv_usec) / 1000);
 		if (sleeptime > 0)
 		{
-			//msleepstep(sleeptime, 10);
 			usleep(sleeptime * 1000);
 		}
 	}

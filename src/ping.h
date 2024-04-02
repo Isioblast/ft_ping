@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/06 06:56:21 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/03/26 14:46:21 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/04/02 14:22:38 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,8 +63,9 @@ typedef struct s_ping_stat
 	char *hostname;
 	size_t emit_nb;
 	size_t receive_nb;
-	int max_time;
-	int min_time;
+	double time_sum;
+	double time_max;
+	double time_min;
 } t_ping_stat;
 
 typedef struct s_ping
@@ -83,9 +84,9 @@ typedef struct s_ping
 int ping_init(t_ping *ping, t_ping_opt *opt);
 struct icmphdr icmp_init();
 uint16_t chksum(uint16_t *addr, int len);
-int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
+void init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
 int lookup_host(const char *const hostname, struct sockaddr_in *const dest);
-int ping_loop(t_ping *ping, t_ping_opt *opt);
+int ping_loop(t_ping *const ping, const t_ping_opt *const opt);
 int msleep(const size_t msec);
 int tvtimeout(struct timeval start_tv, struct timeval current_tv, struct timeval timeout_tv);
 
