@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/12 05:24:46 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/04/02 14:50:48 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/04/02 16:18:56 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,7 +283,7 @@ int ping_loop(t_ping *const ping, const t_ping_opt *const opt)
 	printf("PING %s (%s): %zu data bytes", ping->hostname, addrbuf, ping->datalen);
 	if (ping->verbose)
 	{
-		printf(", id %X = %d", ping->hdr.un.echo.id, ping->hdr.un.echo.id);
+		printf(", id 0x%X = %d", ping->hdr.un.echo.id, ping->hdr.un.echo.id);
 	}
 	printf("\n");
 	while (run)
