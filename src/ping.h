@@ -73,7 +73,7 @@ typedef struct s_ping
 	int fd;
 	struct sockaddr_in dest;
 	struct icmphdr hdr;
-	uint8_t *data;
+	uint8_t data[PING_DEFAULT_DATALEN];
 	size_t datalen;
 	size_t interval;
 	size_t count;
@@ -87,5 +87,6 @@ int init_dest_addr(const int af, const char *src, struct sockaddr_in *dest);
 int lookup_host(const char *const hostname, struct sockaddr_in *const dest);
 int ping_loop(t_ping *ping, t_ping_opt *opt);
 int msleep(const size_t msec);
+int tvtimeout(struct timeval start_tv, struct timeval current_tv, struct timeval timeout_tv);
 
 #endif // PING_H

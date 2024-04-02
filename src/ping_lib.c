@@ -10,10 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <stdlib.h>
 #include <time.h>
-#include <errno.h>
 
-// msleep(): Sleep for the requested number of milliseconds.
+// Sleep for the requested number of msec milliseconds.
 int msleep(const size_t msec)
 {
 	struct timespec ts;
@@ -23,4 +23,9 @@ int msleep(const size_t msec)
 	ts.tv_nsec = (msec % 1000) * 1000000;
 	res = nanosleep(&ts, NULL);
 	return res;
+}
+
+int tvtimeout(struct timeval start_tv, struct timeval current_tv, struct timeval timeout_tv)
+{
+	return (current_tv.tv_sec - start_tv.tv_sec >= timeout_tv.tv_sec && current_tv.tv_usec - start_tv.tv_usec >= timeout_tv.tv_usec);
 }

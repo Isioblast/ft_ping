@@ -103,8 +103,9 @@ int ping_init(t_ping *ping, t_ping_opt *opt)
 		ping->verbose = opt->verbose;
 	}
 	ping->hdr = icmp_init();
-	ping->data = NULL;
 	ping->interval = PING_DEFAULT_INTERVAL;
+	ping->count = opt->count;
+	ping->datalen = PING_DEFAULT_DATALEN;
 	return (0);
 }
 
@@ -134,5 +135,5 @@ int init_dest_addr(const int af, const char *const src, struct sockaddr_in *cons
 			exit(EXIT_FAILURE);
 		}
 	}
-	return (err_code);
+	return (err_code); //TODO return of errcode is incoherent. the function exit when errorcode != 0
 }

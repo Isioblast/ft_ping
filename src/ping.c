@@ -64,7 +64,7 @@ static error_t parse_opt(int key, char *arg __attribute_maybe_unused__, struct a
 static const char doc[] =
 	"Send ICMP ECHO_REQUEST packets to network hosts.";
 
-struct argp_option argp_opt[] = {
+static const struct argp_option argp_opt[] = {
 #define GROUP 0
 	{NULL, 0, NULL, 0, "Options valid for all request types:", GROUP},
 	{"count", 'c', "NUMBER", 0, "stop after sending NUMBER packets", GROUP + 1},
@@ -74,28 +74,24 @@ struct argp_option argp_opt[] = {
 #undef GROUP
 };
 
-struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
+static const struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
 
 int main(int argc, char **argv)
 {
-	t_ping ping;
-	t_ping_opt ping_opt;
+	t_ping		ping;
+	t_ping_opt	ping_opt;
+	int			parse_idx;
 
-	int parse_idx;
 	parse_idx = 0;
 	memset(&ping_opt, 0, sizeof(ping_opt));
 	argp_parse(&argp, argc, argv, 0, &parse_idx, &ping_opt);
-
 	if (ping_init(&ping, &ping_opt))
 	{
 		exit(EXIT_FAILURE);
 	}
-
 	init_dest_addr(AF_INET, argv[parse_idx], &ping.dest);
 	ping.hostname = argv[parse_idx];
-
 	ping_loop(&ping, &ping_opt);
-
 	if (close(ping.fd) < 0)
 	{
 		perror("close");
