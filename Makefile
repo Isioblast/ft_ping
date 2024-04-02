@@ -6,7 +6,7 @@
 #    By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/30 02:48:49 by tde-vlee          #+#    #+#              #
-#    Updated: 2024/03/26 11:18:20 by tde-vlee         ###   ########.fr        #
+#    Updated: 2024/04/02 15:00:21 by tde-vlee         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ CFLAGS = -Wall -Wextra -Werror -pedantic-errors
 
 LDFLAGS =
 
-HEADER =
+HEADER = ./src/ping.h
 
 SRCS =	./src/ping.c \
 		./src/ping_common.c \
@@ -33,7 +33,7 @@ all: $(EXEC)
 $(EXEC): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
 
-%.o: %.c
+%.o: %.c $(HEADER)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:

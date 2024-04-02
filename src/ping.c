@@ -6,7 +6,7 @@
 /*   By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/29 03:23:08 by tde-vlee          #+#    #+#             */
-/*   Updated: 2024/04/02 14:53:08 by tde-vlee         ###   ########.fr       */
+/*   Updated: 2024/04/02 15:01:14 by tde-vlee         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ void parse_arg(int argc, char **argv, int *const parse_idx, t_ping_opt *const op
 #undef GROUP
 	};
 	const struct argp argp = {argp_opt, parse_opt, "HOST ...", doc, NULL, NULL, NULL};
+
 	argp_parse(&argp, argc, argv, 0, parse_idx, options);
 }
 
