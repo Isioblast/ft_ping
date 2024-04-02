@@ -6,11 +6,11 @@
 #    By: tde-vlee <tde-vlee@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/01/30 02:48:49 by tde-vlee          #+#    #+#              #
-#    Updated: 2024/04/02 15:00:21 by tde-vlee         ###   ########.fr        #
+#    Updated: 2024/04/02 16:11:24 by tde-vlee         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-EXEC = ft_ping
+NAME = ft_ping
 
 CC = gcc
 
@@ -28,9 +28,9 @@ SRCS =	./src/ping.c \
 
 OBJS = $(SRCS:.c=.o)
 
-all: $(EXEC)
+all: $(NAME)
 
-$(EXEC): $(OBJS)
+$(NAME): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 %.o: %.c $(HEADER)
@@ -40,8 +40,8 @@ clean:
 	rm -rf $(OBJS)
 
 fclean: clean
-	rm -rf $(EXEC)
+	rm -rf $(NAME)
 
 re: fclean all
 
-.PHONY: all $(EXEC) clean fclean re
+.PHONY: all clean fclean re
