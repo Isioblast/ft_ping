@@ -15,7 +15,7 @@ The following option are availlable :
 
 ## Sources
 
-Here are the source used to make this project :
+Here are the sources used to make this project :
 
 **Internet Protocol :**  
 <https://datatracker.ietf.org/doc/html/rfc791#section-3.1>  
